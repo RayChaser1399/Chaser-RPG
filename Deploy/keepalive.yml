@@ -1,0 +1,29 @@
+name: keepalive
+
+# Пингует /health каждые 10 минут, чтобы бесплатный сервис на Render
+# не засыпал через 15 минут простоя.
+#
+# Настройка:
+# 1. Залейте этот файл (вместе с остальным проектом) в свой репозиторий
+#    на GitHub: .github/workflows/keepalive.yml
+# 2. В репозитории: Settings → Secrets and variables → Actions →
+#    New repository secret → имя RENDER_URL, значение —
+#    https://ваш-сервис.onrender.com (без /health на конце, добавится сам)
+# 3. Вкладка Actions в репозитории → workflow "keepalive" запустится
+#    сам по расписанию. Можно проверить вручную: Actions → keepalive →
+#    Run workflow.
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch: {}   # позволяет запустить вручную кнопкой в GitHub
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping /health
+        run: |
+          curl -sf --max-time 20 "${{ secrets.RENDER_URL }}/health" \
+            && echo "OK, сервер ответил" \
+            || echo "Не ответил — возможно, ещё просыпается, попробуем в следующий раз"
